@@ -2,7 +2,7 @@
 
 -export([start/0, init/0]).
 
-start() -> spawn(master, init, []).
+start() -> spawn(node, init, []).
 
 % (startmap, IdParent, Fmap)
 loop(Dir) ->

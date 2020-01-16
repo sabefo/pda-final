@@ -1,12 +1,13 @@
 -module(master).
 
--export([start/1, init/2, split/2, create_process/2, create_node/0]).
+-export([start/2, init/2, split/2, create_process/3, create_node/1]).
 % [{madrid,34},{barcelona,21}, {madrid,22},{barcelona,19},{teruel,-5}, {teruel, 14}, {madrid,37}, {teruel, -8}, {barcelona,30}, {teruel,10}]
 
 % start() -> spawn(master, init, []).
-start(N) -> spawn(fun() -> create_process(N, []) end).
+start(SplitList, N) -> spawn(fun() -> create_process(SplitList, N, []) end).
 
-create_node() -> io:format("NODO CREADO").
+create_node(S) ->
+	io:format("Lista: ~p~n",[S]).
 
 % Proceso Master
 % Para construir el sistema de nodos usaremos un proceso inicial, el máster, que inicializaremos con dos parámetros:
@@ -17,22 +18,17 @@ create_node() -> io:format("NODO CREADO").
 % 2. Creará N nodos (procesos), cada uno recibiendo un trozo de Info. También recibirá el pid del máster y el número de nodo (entre 1 y N).
 init(Info, N) ->
 	SplitList = split(Info, N),
-	start(N).
+	start(SplitList, N).
 	% io:format("~w inicializado~n", [SplitList]).
 
-create_process(N, Pids) ->
+create_process([], N, Pids) -> ok;
+create_process(SplitList, N, Pids) ->
 	if N > 0 ->
-		Pid = spawn(fun() -> create_node() end),
+		Pid = spawn(fun() -> create_node(hd(SplitList)) end),
 		io:format("arrancado proceso: ~p~n",[Pid]),
 		io:format("Pids va asi: ~p~n",[Pids]),
-		create_process(N - 1, lists:append([Pids, [Pid]]));
+		create_process(tl(SplitList), N - 1, lists:append([Pids, [Pid]]));
 		true -> void
-	end,
-	receive
-		stop ->
-			io:format("muere proceso ~p~n",[self()]),
-			exit("ha recibido stop");
-		_ -> ok
 	end.
 	% loop().
 
