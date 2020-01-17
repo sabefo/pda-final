@@ -2,7 +2,7 @@
 
 -export([start/2, init/2, split/2, create_nodes/5, create_node/3, loop/1]).
 % C:/Users/itestra/Documents/Personal/PDA/Final
-% [{madrid,34},{barcelona,21}, {madrid,22},{barcelona,19},{teruel,-5}, {teruel, 14}, {madrid,37}, {teruel, -8}, {barcelona,30}, {teruel,10}]
+% L = [{madrid,34},{barcelona,21}, {madrid,22},{barcelona,19},{teruel,-5}, {teruel, 14}, {madrid,37}, {teruel, -8}, {barcelona,30}, {teruel,10}].
 
 % Proceso Master
 % Para construir el sistema de nodos usaremos un proceso inicial, el máster, que inicializaremos con dos parámetros:
@@ -37,16 +37,8 @@ loop(NodePids) ->
 	receive
 		{ mapreduce, Parent, Fmap, Freduce } ->
 			dealer:init(Parent, Fmap, Freduce, NodePids),
-			% From ! { self(), Width * Height },
 			loop(NodePids)
-		% { From, { circle, R }} ->
-		% 	From ! { self(), math:pi() * R * R },
-		% 	loop(NodePids);
-		% { From, Other } ->
-		% 	From ! { self(), { error, Other } },
-		% 	loop(NodePids).
 	end.
-
 
 % master_message(mapreduce, Parent, Fmap, Freduce).
 % El máster guardará la lista de Pids de los nodos creados, y entrará en un bucle sin fin que se dedica a recibir mensajes mapreduce y procesarlos. Los mensajes mapreduce que espera el máster tienen la estructura {mapreduce, Parent, Fmap, Freduce} donde:
