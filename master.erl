@@ -1,6 +1,7 @@
 -module(master).
 
--export([start/2, init/2, split/2, create_process/3, create_node/1, loop/0]).
+-export([start/2, init/2, split/2, create_nodes/5, create_node/3, loop/1]).
+% C:/Users/itestra/Documents/Personal/PDA/Final
 % [{madrid,34},{barcelona,21}, {madrid,22},{barcelona,19},{teruel,-5}, {teruel, 14}, {madrid,37}, {teruel, -8}, {barcelona,30}, {teruel,10}]
 
 % Proceso Master
@@ -12,37 +13,38 @@
 % 2. Creará N nodos (procesos), cada uno recibiendo un trozo de Info. También recibirá el pid del máster y el número de nodo (entre 1 y N).
 init(Info, N) ->
 	SplitList = split(Info, N),
+	io:format("Spliteamos: ~p~n",[SplitList]),
 	start(SplitList, N).
 	% io:format("~w inicializado~n", [SplitList]).
 
 % start() -> spawn(master, init, []).
-start(SplitList, N) -> spawn(fun() -> create_processes(SplitList, N, [], 0) end).
+start(SplitList, N) -> spawn(fun() -> create_nodes(SplitList, N, [], 0, self()) end).
 
-create_processes([], N, Pids, _) -> ok;
-create_processes(SplitList, N, Pids, NodeNumber) ->
+create_nodes([], _, _, _, _) -> ok;
+create_nodes(SplitList, N, NodePids, NodeNumber, MasterPid) ->
 	if N > 0 ->
-		Pid = spawn(fun() -> create_node(hd(SplitList), self(), NodeNumber + 1) end),
-		io:format("arrancado proceso: ~p~n",[Pid]),
-		io:format("Pids va asi: ~p~n",[Pids]),
-		create_processes(tl(SplitList), N - 1, lists:append([Pids, [Pid]]), NodeNumber + 1);
+		Pid = spawn(fun() -> create_node(hd(SplitList), MasterPid, NodeNumber + 1) end),
+		create_nodes(tl(SplitList), N - 1, lists:append([NodePids, [Pid]]), NodeNumber + 1, MasterPid);
 		true -> void
-	end.
-	loop().
+	end,
+	loop(NodePids).
 
 create_node(List, PidMaster, NodeNumber) ->
 	node:loop(List, PidMaster, NodeNumber).
 
-loop() ->
+loop(NodePids) ->
+	io:format("Entramos al loop ~n"),
 	receive
-		{ From, { rectangle, Width, Height } } ->
-			From ! { self(), Width * Height },
-			loop();
-		{ From, { circle, R }} ->
-			From ! { self(), math:pi() * R * R },
-			loop();
-		{ From, Other } ->
-			From ! { self(), { error, Other } },
-			loop()
+		{ mapreduce, Parent, Fmap, Freduce } ->
+			dealer:init(Parent, Fmap, Freduce, NodePids),
+			% From ! { self(), Width * Height },
+			loop(NodePids)
+		% { From, { circle, R }} ->
+		% 	From ! { self(), math:pi() * R * R },
+		% 	loop(NodePids);
+		% { From, Other } ->
+		% 	From ! { self(), { error, Other } },
+		% 	loop(NodePids).
 	end.
 
 

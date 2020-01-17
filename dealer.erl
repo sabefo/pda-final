@@ -1,3 +1,7 @@
 -module(dealer).
 
--export([start/2, init/2, split/2, create_process/3, create_node/1, loop/0]).
+-export([init/4]).
+
+% mapreduce, Parent, Fmap, Freduce
+init(Parent, Fmap, Freduce, NodePids) ->
+	io:format("Dealer con: ~p~n",[NodePids]).
