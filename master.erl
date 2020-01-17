@@ -1,13 +1,7 @@
 -module(master).
 
--export([start/2, init/2, split/2, create_process/3, create_node/1]).
+-export([start/2, init/2, split/2, create_process/3, create_node/1, loop/0]).
 % [{madrid,34},{barcelona,21}, {madrid,22},{barcelona,19},{teruel,-5}, {teruel, 14}, {madrid,37}, {teruel, -8}, {barcelona,30}, {teruel,10}]
-
-% start() -> spawn(master, init, []).
-start(SplitList, N) -> spawn(fun() -> create_process(SplitList, N, []) end).
-
-create_node(S) ->
-	io:format("Lista: ~p~n",[S]).
 
 % Proceso Master
 % Para construir el sistema de nodos usaremos un proceso inicial, el máster, que inicializaremos con dos parámetros:
@@ -21,29 +15,35 @@ init(Info, N) ->
 	start(SplitList, N).
 	% io:format("~w inicializado~n", [SplitList]).
 
-create_process([], N, Pids) -> ok;
-create_process(SplitList, N, Pids) ->
+% start() -> spawn(master, init, []).
+start(SplitList, N) -> spawn(fun() -> create_processes(SplitList, N, [], 0) end).
+
+create_processes([], N, Pids, _) -> ok;
+create_processes(SplitList, N, Pids, NodeNumber) ->
 	if N > 0 ->
-		Pid = spawn(fun() -> create_node(hd(SplitList)) end),
+		Pid = spawn(fun() -> create_node(hd(SplitList), self(), NodeNumber + 1) end),
 		io:format("arrancado proceso: ~p~n",[Pid]),
 		io:format("Pids va asi: ~p~n",[Pids]),
-		create_process(tl(SplitList), N - 1, lists:append([Pids, [Pid]]));
+		create_processes(tl(SplitList), N - 1, lists:append([Pids, [Pid]]), NodeNumber + 1);
 		true -> void
 	end.
-	% loop().
+	loop().
 
-% loop() ->
-% 	receive
-% 		{ From, { rectangle, Width, Height } } ->
-% 			From ! { self(), Width * Height },
-% 			loop();
-% 		{ From, { circle, R }} ->
-% 			From ! { self(), math:pi() * R * R },
-% 			loop();
-% 		{ From, Other } ->
-% 			From ! { self(), { error, Other } },
-% 			loop()
-% 	end.
+create_node(List, PidMaster, NodeNumber) ->
+	node:loop(List, PidMaster, NodeNumber).
+
+loop() ->
+	receive
+		{ From, { rectangle, Width, Height } } ->
+			From ! { self(), Width * Height },
+			loop();
+		{ From, { circle, R }} ->
+			From ! { self(), math:pi() * R * R },
+			loop();
+		{ From, Other } ->
+			From ! { self(), { error, Other } },
+			loop()
+	end.
 
 
 % master_message(mapreduce, Parent, Fmap, Freduce).
