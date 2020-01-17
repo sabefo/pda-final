@@ -6,7 +6,7 @@
 init(Parent, Fmap, Freduce, NodePids) ->
 	send_function(NodePids, Fmap).
 
-send_function([], _) -> loop();
+send_function([], _) -> loop([]);
 send_function(NodePids, Fmap) ->
 	hd(NodePids) ! { startmap, self(), Fmap },
 	send_function(tl(NodePids), Fmap).
@@ -17,9 +17,10 @@ loop(Dictionary) ->
 			io:format("Recibi ENDS ~n"),
 			loop(Dictionary);
 		{ { Key, Value }, IdNode } -> 
+			% element(1, Dictionary)
 			io:format("Recibi K ~n~p",[Key]),
 			io:format("Recibi V ~n~p",[Value]),
-			loop()
+			loop(Dictionary)
 	end.
 
 	% if N > 0 ->
