@@ -1,8 +1,8 @@
 -module(master).
 
 -export([start/2, init/2, split/2, create_nodes/5, create_node/3, loop/1]).
-% C:/Users/itestra/Documents/Personal/PDA/Final
-% L = [{madrid,34},{barcelona,21}, {madrid,22},{barcelona,19},{teruel,-5}, {teruel, 14}, {madrid,37}, {teruel, -8}, {barcelona,30}, {teruel,10}].
+% 'C:/Users/itestra/Documents/Personal/PDA/Final'
+% L = [{madrid,34}, {barcelona,21}, {madrid,22}, {barcelona,19}, {teruel,-5}, {teruel, 14}, {madrid,37}, {teruel, -8}, {barcelona,30}, {teruel,10}].
 
 % Proceso Master
 % Para construir el sistema de nodos usaremos un proceso inicial, el máster, que inicializaremos con dos parámetros:
@@ -33,10 +33,10 @@ create_node(List, PidMaster, NodeNumber) ->
 	node:loop(List, PidMaster, NodeNumber).
 
 loop(NodePids) ->
-	io:format("Entramos al loop ~n"),
+	io:format("Ahora se pueden mandar las funciones Fmap y Freduce ~n"),
 	receive
-		{ mapreduce, Parent, Fmap, Freduce } ->
-			dealer:init(Parent, Fmap, Freduce, NodePids),
+		{ mapreduce, Parent, Fmap, Freduce } -> 
+			spawn(fun() -> dealer:init(Parent, Fmap, Freduce, NodePids) end),
 			loop(NodePids)
 	end.
 
