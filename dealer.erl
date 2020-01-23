@@ -6,8 +6,8 @@
 init(Parent, Fmap, Freduce, NodePids) ->
 	send_function(NodePids, Fmap),
 	receive_results(maps:new(), Freduce, length(NodePids)),
-	io:format("A recolectar mensajes de KV ~n").
-	%loop
+	io:format("A recolectar mensajes de KV ~n"),
+	receive_results(maps:new(), Freduce, 1).
 
 send_function([], _) -> ok;
 send_function([HeadPid | TailPids], Fmap) ->
@@ -15,46 +15,30 @@ send_function([HeadPid | TailPids], Fmap) ->
 	send_function(TailPids, Fmap).
 
 receive_results(Dictionary, _, 0) -> 
-	io:format("Dictionary es = ~p~n",[Dictionary]),
+	io:format("Dictionary quedo asi = ~p~n",[Dictionary]),
 	Dictionary;
 receive_results(Dictionary, Freduce, NLeft) ->
+	io:format("ESPERANDO MENSAJES ~n"),
 	receive
-		'end' ->
-			io:format("Recibi ENDS ~n"),
+		{ mapper_end, 'end' } ->
+			io:format("Recibi ENDS del MAPPER ~n"),
 			receive_results(Dictionary, Freduce, NLeft - 1);
-		{ Key, Value } ->
-			io:format("Recibi K = ~p~n",[Key]),
-			io:format("Recibi V = ~p~n",[Value]),
+		{ mapper_results, { Key, Value } } ->
 			NewDictionary = check_dictionary(Key, Value, Dictionary, Freduce),
-			io:format("Dictionary es = ~p~n",[NewDictionary]),
-			% REVISO DIC, SI ESTA, MANDO AL MISMO REDUCER, SINO CREO UNO Y RECUERDO SU PID EN EL DIC Y MANDO AL NUEVO REDUCER
-			receive_results(NewDictionary, Freduce, NLeft)
+			receive_results(NewDictionary, Freduce, NLeft);
+		{ reducer_results, { Key, Value } } ->
+			io:format("Recibi K = ~p~n",[Key]),
+			io:format("Recibi V = ~p~n",[Value])
 	end.
 
-
-% {IdParent, Freduce, Clave, Valor}
 check_dictionary(Key, Value, Dictionary, Freduce) ->
 	Boolean = maps:is_key(Key, Dictionary),
 	if Boolean =:= true ->
 		Pid = maps:get(Key, Dictionary),
-		io:format("SI LO TENGO, GRITO AL PID = ~p~n",[Pid]),
+		Pid ! { newValue, Value },
+		io:format("Grite al pid este = ~p~n",[Pid]),
 		Dictionary;
 	true ->
 		Pid = spawn(fun() -> reducer:init(self(), Freduce, Key, Value) end),
-		NewDictionary = maps:put(Key, Pid, Dictionary),
-		NewDictionary
+		maps:put(Key, Pid, Dictionary)
 	end.
-
-% check_dictionary(Key, Value, Dictionary, Freduce) ->
-% 	io:format("Vamos a buscar KEY, que es = ~p~n",[Key]),
-% 	error =:= maps:find(Key, Dictionary),
-% 	io:format("Vamos a buscar en Dictionary, que es = ~p~n",[Dictionary]),
-% 	io:format("No lo tengo, agrego y mando esto al reducer ~n"),
-% 	Pid = spawn(fun() -> reducer:init(self(), Freduce, Key, Value) end),
-% 	NewDictionary = maps:put(Key, Pid, Dictionary),
-% 	NewDictionary;
-% check_dictionary(Key, Value, Dictionary, Freduce) ->
-% 	{ ok, Pid } = maps:find(Key, Dictionary),
-% 	io:format("Si lo tengo, mando esto al reducer ~n"),
-% 	io:format("PID ES = ~p~n",[Pid]),
-% 	Dictionary.

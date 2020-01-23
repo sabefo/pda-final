@@ -2,10 +2,20 @@
 % UNO POR CLAVE
 -module(reducer).
 
--export([init/4]).
+-export([init/4, loop/4]).
 
-init(IdParent, Freduce, Clave, Valor) ->
-	io:format("REDUCER!!!!!!!!!!!!! ~n").
+init(IdParent, Freduce, Key, Value) ->
+	loop(IdParent, Freduce, Key, Value).
+
+loop(IdParent, Freduce, Key, Value) ->
+	receive
+		{ newValue, NewValue } ->
+			io:format("Este es un reducer ~n"),
+			% Result = Freduce(Key, Value, NewValue),
+			Result = NewValue,
+			loop(IdParent, Freduce, Key, Result);
+		'end' -> IdParent ! { reducer, { Key, Value } }
+	end.
 
 % {IdParent, Freduce, Clave, Valor}
 % Cuando se crean reciben como valores iniciales {IdParent, Freduce, Clave, Valor}. Cada proceso reduce actúa de la siguiente forma:

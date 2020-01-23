@@ -15,19 +15,18 @@ init(Info, N) ->
 	SplitList = split(Info, N),
 	io:format("Spliteamos: ~p~n",[SplitList]),
 	start(SplitList, N).
-	% io:format("~w inicializado~n", [SplitList]).
 
-% start() -> spawn(master, init, []).
 start(SplitList, N) -> spawn(fun() -> create_nodes(SplitList, N, [], 0, self()) end).
 
 create_nodes([], _, _, _, _) -> ok;
-create_nodes(SplitList, N, NodePids, NodeNumber, MasterPid) ->
+create_nodes([HeadList| TailList], N, NodePids, NodeNumber, MasterPid) ->
 	if N > 0 ->
-		Pid = spawn(fun() -> create_node(hd(SplitList), MasterPid, NodeNumber + 1) end),
-		create_nodes(tl(SplitList), N - 1, lists:append([NodePids, [Pid]]), NodeNumber + 1, MasterPid);
+		Pid = spawn(fun() -> create_node(HeadList, MasterPid, NodeNumber + 1) end),
+		create_nodes(TailList, N - 1, lists:append([NodePids, [Pid]]), NodeNumber + 1, MasterPid);
 		true -> void
 	end,
-	loop(NodePids).
+	loop(NodePids),
+	self() ! { mapreduce, self(), 1, 1 }.
 
 create_node(List, PidMaster, NodeNumber) ->
 	node:loop(List, PidMaster, NodeNumber).
