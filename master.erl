@@ -1,7 +1,7 @@
 -module(master).
 
 -export([start/2, init/2, split/2, create_nodes/5, create_node/3, loop/1]).
-% 'C:/Users/itestra/Documents/Personal/PDA/Final'
+% cd('C:/Users/itestra/Documents/Personal/PDA/Final').
 % L = [{madrid,34}, {barcelona,21}, {madrid,22}, {barcelona,19}, {teruel,-5}, {teruel, 14}, {madrid,37}, {teruel, -8}, {barcelona,30}, {teruel,10}].
 
 % Proceso Master

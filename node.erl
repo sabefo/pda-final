@@ -5,9 +5,9 @@
 loop(List, PidMaster, NodeNumber) ->
 	receive
 		{ startmap, IdParent, Fmap } ->
-			KeyValues = Fmap(List, 15, []),
-			send_results(KeyValues, IdParent),
-			% send_results(List, IdParent),
+			% KeyValues = Fmap(List, 15, []),
+			% send_results(KeyValues, IdParent),
+			send_results(List, IdParent),
 			loop(List, PidMaster, NodeNumber)
 	end.
 	% loop(List, PidMaster, NodeNumber)
