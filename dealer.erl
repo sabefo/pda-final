@@ -3,7 +3,7 @@
 -export([init/4, send_function/2, receive_results/3, check_dictionary/4, send_ends/1]).
 
 % Funcion que inicializa al dealer
-init(Parent, Fmap, Freduce, NodePids) ->
+init(_Parent, Fmap, Freduce, NodePids) ->
 	send_function(NodePids, Fmap),
 	Dictionary = receive_results(maps:new(), Freduce, length(NodePids)),
 	receive_results(Dictionary, Freduce, 1).
