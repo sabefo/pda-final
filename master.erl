@@ -23,7 +23,7 @@ init(Info, N) ->
 start(SplitList, N) -> spawn(fun() -> create_nodes(SplitList, N, [], 0, self()) end).
 
 % Aqui creamos los nodos uno por uno y les mandamos la informacion correspondiente
-create_nodes([], _, _, _, _) -> ok;
+create_nodes([], _, NodePids, _, _) -> loop(NodePids);
 create_nodes([HeadList| TailList], N, NodePids, NodeNumber, MasterPid) ->
 	if N > 0 ->
 		Pid = spawn(fun() -> create_node(HeadList, MasterPid, NodeNumber + 1) end),

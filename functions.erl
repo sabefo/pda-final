@@ -5,7 +5,7 @@
 filter([], _, Z) -> lists:flatten(Z);
 filter([{ X, Y }|T], N, Z) ->
 	if
-		Y > 15 ->
+		Y > 10 ->
 			filter(T, N, lists:append(Z, [{ X, Y }]));
 		true ->
 			filter(T, N, Z)
