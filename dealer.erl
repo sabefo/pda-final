@@ -1,12 +1,12 @@
 -module(dealer).
 
--export([init/4, send_function/2, receive_results/3, check_dictionary/4, send_ends/1]).
+-export([init/4, send_function/2, receive_results/3, check_dictionary/4, send_ends/1, receive_final_results/0]).
 
 % Funcion que inicializa al dealer
 init(_Parent, Fmap, Freduce, NodePids) ->
 	send_function(NodePids, Fmap),
 	Dictionary = receive_results(maps:new(), Freduce, length(NodePids)),
-	receive_results(Dictionary, Freduce, 1).
+	receive_final_results().
 
 % Funcion que manda end a los reducers una vez que todos los mappers terminan
 send_ends([])-> ok;
@@ -28,15 +28,18 @@ receive_results(Dictionary, _, 0) ->
 receive_results(Dictionary, Freduce, NLeft) ->
 	receive
 		{ mapper_end, 'end' } ->
-			io:format("Recibi END del MAPPER ~n"),
+			io:format("Acabo un Mapper ~n"),
 			receive_results(Dictionary, Freduce, NLeft - 1);
 		{ mapper_results, { Key, Value } } ->
 			NewDictionary = check_dictionary(Key, Value, Dictionary, Freduce),
-			receive_results(NewDictionary, Freduce, NLeft);
+			receive_results(NewDictionary, Freduce, NLeft)
+	end.
+
+receive_final_results() ->
+	receive
 		{ reducer_results, { Key, Value } } ->
-			io:format("Recibi K = ~p~n",[Key]),
-			io:format("Recibi V = ~p~n",[Value]),
-			receive_results(Dictionary, Freduce, 1)
+			io:format("Resultado = ~p: ~p~n", [Key, Value]),
+			receive_final_results()
 	end.
 
 % Funcion que recibe un diccionario y revisa si ya cuenta con un dato o no, y despues llama a los reducers
@@ -45,7 +48,6 @@ check_dictionary(Key, Value, Dictionary, Freduce) ->
 	if Boolean =:= true ->
 		Pid = maps:get(Key, Dictionary),
 		Pid ! { newValue, Value },
-		io:format("Grite al pid este = ~p~n",[Pid]),
 		Dictionary;
 	true ->
 		Me = self(),
